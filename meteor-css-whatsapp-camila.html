@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camila</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #d1d7db;
+    display: flex; justify-content: center;
+    min-height: 100vh;
+  }
+  .phone {
+    width: 100%; max-width: 760px;
+    display: flex; flex-direction: column;
+    height: 100vh;
+    background: #efeae2;
+    box-shadow: 0 0 12px rgba(0,0,0,.15);
+  }
+
+  /* Header */
+  .chat-header {
+    background: #075e54;
+    color: #fff;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    flex-shrink: 0;
+  }
+  .contact-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #cfd8dc;
+    color: #607d8b;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 17px;
+  }
+  .contact-info { flex: 1; }
+  .contact-name { font-size: 16px; font-weight: 600; }
+  .contact-status { font-size: 12px; color: #c8e6c9; }
+  .header-icons { display: flex; gap: 22px; opacity: .9; }
+  .header-icons svg { width: 20px; height: 20px; fill: #fff; }
+
+  /* Chat area */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 7% 24px 7%;
+    background:
+      linear-gradient(rgba(239,234,226,.94), rgba(239,234,226,.94)),
+      repeating-linear-gradient(45deg, #d9d2c5 0 2px, transparent 2px 24px);
+  }
+
+  .date-divider {
+    display: flex; justify-content: center; margin: 14px 0 10px 0;
+  }
+  .date-divider span {
+    background: #fff;
+    color: #54656f;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px .5px rgba(11,20,26,.13);
+  }
+
+  .msg-row { display: flex; margin-bottom: 4px; }
+  .msg-row.in { justify-content: flex-start; }
+  .msg-row.out { justify-content: flex-end; }
+
+  .bubble {
+    max-width: 72%;
+    padding: 7px 9px 8px 10px;
+    border-radius: 8px;
+    font-size: 14.2px;
+    line-height: 1.45;
+    color: #111b21;
+    box-shadow: 0 1px .5px rgba(11,20,26,.13);
+    position: relative;
+    word-wrap: break-word;
+  }
+  .in .bubble { background: #fff; border-top-left-radius: 0; }
+  .out .bubble { background: #d9fdd3; border-top-right-radius: 0; }
+
+  .meta {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; color: #667781;
+    float: right;
+    margin: 6px 0 -4px 8px;
+    white-space: nowrap;
+  }
+  .ticks { color: #53bdeb; font-size: 13px; letter-spacing: -3px; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="chat-header">
+    <div class="contact-avatar">C</div>
+    <div class="contact-info">
+      <div class="contact-name">Camila</div>
+      <div class="contact-status">online</div>
+    </div>
+    <div class="header-icons">
+      <svg viewBox="0 0 24 24"><path d="M15.9 14.3H15l-.3-.3c1-1.1 1.6-2.7 1.6-4.3 0-3.7-3-6.7-6.7-6.7S3 6 3 9.7s3 6.7 6.7 6.7c1.6 0 3.2-.6 4.3-1.6l.3.3v.8l5.1 5.1 1.5-1.5-5-5.2zm-6.2 0c-2.6 0-4.6-2.1-4.6-4.6s2.1-4.6 4.6-4.6 4.6 2.1 4.6 4.6-2 4.6-4.6 4.6z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 3a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 10zm0 7a2 2 0 1 0-.001 4.001A2 2 0 0 0 12 17z"/></svg>
+    </div>
+  </div>
+
+  <div class="chat-area">
+
+    <div class="date-divider"><span>Mon, Aug 10</span></div>
+
+    <div class="msg-row in"><div class="bubble">Hi! Quick one. Derek pulled me aside today to talk about one of the customer support reps, Bri. Apparently she's been there a while but isn't hitting the results they expect, and they can't figure out why. He says she doesn't open up with him or the other managers, gets a bit defensive when they bring it up.<span class="meta">10:12 AM</span></div></div>
+
+    <div class="msg-row in"><div class="bubble">So he asked if I could feel things out with her. Get a sense of what she's doing day to day, where she's getting stuck, what's slowing her down. I guess after 8 months I'm the friendly face that isn't her boss haha<span class="meta">10:13 AM</span></div></div>
+
+    <div class="msg-row in"><div class="bubble">Just flagging it because it's a bit outside inbox and calendar. I'll tell you what I find.<span class="meta">10:13 AM</span></div></div>
+
+    <div class="msg-row out"><div class="bubble">Thanks for flagging! Yes please keep me posted &#128588;<span class="meta">10:41 AM <span class="ticks">&#10003;&#10003;</span></span></div></div>
+
+    <div class="date-divider"><span>Thu, Aug 13</span></div>
+
+    <div class="msg-row in"><div class="bubble">Update: had coffee (virtual) with Bri. She's not lazy, she's drowning. She's the only one answering support, nothing is written down anywhere, and every answer lives in her head. She said "nobody knows what I do until I don't do it." Honestly I get it.<span class="meta">4:27 PM</span></div></div>
+
+    <div class="msg-row out"><div class="bubble">That's really useful context. How did she seem overall?<span class="meta">4:52 PM <span class="ticks">&#10003;&#10003;</span></span></div></div>
+
+    <div class="msg-row in"><div class="bubble">Checked out, if I'm honest. Like she's already halfway gone.<span class="meta">4:58 PM</span></div></div>
+
+    <div class="date-divider"><span>Sun, Aug 16</span></div>
+
+    <div class="msg-row in"><div class="bubble">Well. Bri resigned over the weekend. Derek asked me this morning if I can cover part of customer support for now while he figures out the plan. I said yes of course.<span class="meta">11:05 AM</span></div></div>
+
+    <div class="msg-row out"><div class="bubble">Wow, ok. Thanks for stepping up. Let's talk about what that looks like. Are you ok?<span class="meta">11:32 AM <span class="ticks">&#10003;&#10003;</span></span></div></div>
+
+    <div class="msg-row in"><div class="bubble">All good! It'll be a busy couple of weeks but we'll manage.<span class="meta">11:36 AM</span></div></div>
+
+    <div class="date-divider"><span>Wed, Aug 19</span></div>
+
+    <div class="msg-row in"><div class="bubble">So, small problem. I asked Derek if there's any SOP, training doc, anything for support. There's nothing. Zero. It was all in Bri's head and she's gone. I'm reverse-engineering it from her old emails.<span class="meta">2:14 PM</span></div></div>
+
+    <div class="msg-row in"><div class="bubble">Also for context, the support inbox is around 35 to 40 tickets a week. It's a real job. I'm doing support in the afternoons and squeezing the EA work into mornings.<span class="meta">2:16 PM</span></div></div>
+
+    <div class="msg-row out"><div class="bubble">Understood. Let's go deep on this in our check-in Monday. Adding it to the agenda.<span class="meta">2:48 PM <span class="ticks">&#10003;&#10003;</span></span></div></div>
+
+    <div class="msg-row in"><div class="bubble">&#128077; see you Monday<span class="meta">2:50 PM</span></div></div>
+
+  </div>
+</div>
+</body>
+</html>
