@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mail - Inbox</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    background: #f6f8fc;
+    color: #202124;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+  }
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    display: flex; align-items: center;
+    padding: 8px 16px; background: #f6f8fc;
+    gap: 16px; flex-shrink: 0;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; min-width: 200px; }
+
+  .brand-name { font-size: 21px; color: #5f6368; font-weight: 400; }
+  .searchbar {
+    flex: 1; max-width: 720px; display: flex; align-items: center;
+    background: #eaf1fb; border-radius: 24px; padding: 10px 16px; gap: 12px;
+    color: #5f6368;
+  }
+  .searchbar svg { flex-shrink: 0; }
+  .searchbar input {
+    border: none; background: transparent; outline: none;
+    font-size: 15px; width: 100%; color: #202124;
+  }
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .meteor-logo { height: 32px; width: auto; display: block; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #7b1fa2; color: #fff; display: flex;
+    align-items: center; justify-content: center; font-weight: 600; font-size: 14px;
+  }
+
+  /* ---------- Body layout ---------- */
+  .body-wrap { display: flex; flex: 1; overflow: hidden; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 240px; flex-shrink: 0; padding: 8px 8px 16px 8px;
+    overflow-y: auto; background: #f6f8fc;
+  }
+  .compose-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: #c2e7ff; border: none; border-radius: 16px;
+    padding: 14px 20px; font-size: 14px; font-weight: 500;
+    color: #001d35; cursor: pointer; margin: 8px 0 16px 4px;
+    box-shadow: 0 1px 2px rgba(60,64,67,.3);
+  }
+  .nav-section { margin-bottom: 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 7px 12px 7px 24px; border-radius: 0 20px 20px 0;
+    cursor: pointer; color: #202124; user-select: none;
+  }
+  .nav-item:hover { background: #e9eef6; }
+  .nav-item.active { background: #d3e3fd; font-weight: 700; }
+  .nav-item .count { margin-left: auto; font-size: 12px; font-weight: 700; }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; fill: #444746; }
+  .labels-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 12px 6px 24px; color: #202124; font-size: 14px; font-weight: 500;
+  }
+  .label-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 6px 12px 6px 24px; border-radius: 0 20px 20px 0;
+    cursor: pointer; color: #202124;
+  }
+  .label-item:hover { background: #e9eef6; }
+  .label-item.active { background: #d3e3fd; font-weight: 700; }
+  .label-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; margin-left: 3px; margin-right: 1px; }
+
+  /* ---------- Main panel ---------- */
+  .main {
+    flex: 1; background: #fff; border-radius: 16px;
+    margin: 0 16px 16px 0; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .list-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-bottom: 1px solid #f1f3f4; flex-shrink: 0;
+    color: #5f6368;
+  }
+  .list-toolbar .spacer { flex: 1; }
+  .list-toolbar .range { font-size: 12px; color: #5f6368; }
+  .icon-btn {
+    background: none; border: none; cursor: pointer; padding: 8px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background: #f1f3f4; }
+  .icon-btn svg { width: 18px; height: 18px; fill: #5f6368; }
+  .checkbox {
+    width: 16px; height: 16px; border: 2px solid #757775; border-radius: 2px;
+    cursor: pointer; flex-shrink: 0;
+  }
+
+  .view { flex: 1; overflow-y: auto; display: none; }
+  .view.visible { display: block; }
+
+  /* ---------- Email row ---------- */
+  .email-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; cursor: pointer;
+    border-bottom: 1px solid #f1f3f4;
+    background: #fff;
+  }
+  .email-row:hover { box-shadow: inset 1px 0 0 #dadce0, inset -1px 0 0 #dadce0, 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); z-index: 1; position: relative; }
+  .email-row.unread { background: #fff; }
+  .email-row .star { color: #c4c7c5; font-size: 18px; cursor: pointer; }
+  .email-row .sender { width: 190px; flex-shrink: 0; font-weight: 700; }
+  .email-row .snippet { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .email-row .snippet .subj { font-weight: 700; }
+  .email-row .snippet .preview { color: #5f6368; font-weight: 400; }
+  .email-row .time { font-size: 12px; font-weight: 700; color: #202124; flex-shrink: 0; }
+
+  /* ---------- Empty state ---------- */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 90px 20px; color: #5f6368;
+    text-align: center; gap: 8px;
+  }
+  .empty-state .big { font-size: 15px; }
+
+  /* ---------- Email open view ---------- */
+  .email-open { padding: 12px 0 40px 0; }
+  .email-open-toolbar {
+    display: flex; align-items: center; gap: 4px; padding: 0 12px 8px 12px;
+    border-bottom: 1px solid #f1f3f4;
+  }
+  .email-subject-line {
+    font-size: 22px; font-weight: 400; padding: 20px 72px 8px 72px;
+  }
+  .email-meta {
+    display: flex; align-items: flex-start; gap: 14px; padding: 10px 24px;
+  }
+  .sender-avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: #0b8043;
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 16px; flex-shrink: 0;
+  }
+  .meta-text { flex: 1; }
+  .meta-text .from { font-weight: 700; font-size: 14px; }
+  .meta-text .from span { font-weight: 400; color: #5f6368; font-size: 12px; }
+  .meta-text .to { color: #5f6368; font-size: 12px; }
+  .email-meta .when { font-size: 12px; color: #5f6368; flex-shrink: 0; padding-top: 2px; }
+  .email-body {
+    padding: 18px 24px 0 78px; line-height: 1.65; font-size: 14px; max-width: 760px;
+  }
+  .email-body p { margin-bottom: 16px; }
+  .folder-chip {
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid #dadce0; border-radius: 8px;
+    padding: 10px 16px; margin: 2px 0 16px 0;
+    text-decoration: none; color: #202124; font-weight: 500;
+    background: #fff;
+  }
+  .folder-chip:hover { background: #f8f9fa; }
+  .folder-chip svg { width: 20px; height: 20px; fill: #5f6368; flex-shrink: 0; }
+  .sig { color: #202124; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">
+      <img class="meteor-logo" src="data:image/png;base64,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" alt="METEOR">
+      <div class="brand-name">Mail</div>
+    </div>
+    <div class="searchbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#5f6368"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input type="text" placeholder="Search mail" readonly>
+    </div>
+    <div class="top-right">
+      <div class="avatar">C</div>
+    </div>
+  </div>
+
+  <div class="body-wrap">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <button class="compose-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#001d35"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        Compose
+      </button>
+
+      <div class="nav-section">
+        <div class="nav-item active" data-view="inbox" onclick="showView('inbox', this)">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 12h-4c0 1.66-1.34 3-3 3s-3-1.34-3-3H5V5h14v10z"/></svg>
+          Inbox <span class="count">1</span>
+        </div>
+        <div class="nav-item" data-view="starred" onclick="showView('starred', this)">
+          <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          Starred
+        </div>
+        <div class="nav-item" data-view="snoozed" onclick="showView('snoozed', this)">
+          <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+          Snoozed
+        </div>
+        <div class="nav-item" data-view="sent" onclick="showView('sent', this)">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          Sent
+        </div>
+        <div class="nav-item" data-view="drafts" onclick="showView('drafts', this)">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          Drafts
+        </div>
+      </div>
+
+      <div class="labels-header">
+        Labels
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#444746"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      </div>
+      <div class="label-item" data-view="label-clients" onclick="showView('label-clients', this)">
+        <span class="label-dot" style="background:#16a765"></span> Clients
+      </div>
+      <div class="label-item" data-view="label-notion" onclick="showView('label-notion', this)">
+        <span class="label-dot" style="background:#ffad46"></span> Notion
+      </div>
+      <div class="label-item" data-view="label-jp" onclick="showView('label-jp', this)">
+        <span class="label-dot" style="background:#4986e7"></span> JP
+      </div>
+      <div class="label-item" data-view="label-florence" onclick="showView('label-florence', this)">
+        <span class="label-dot" style="background:#b99aff"></span> Florence
+      </div>
+    </div>
+
+    <!-- Main panel -->
+    <div class="main">
+
+      <!-- Inbox list -->
+      <div class="view visible" id="view-inbox">
+        <div class="list-toolbar">
+          <div class="checkbox"></div>
+          <button class="icon-btn" title="Refresh"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+          <button class="icon-btn" title="More"><svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
+          <div class="spacer"></div>
+          <div class="range">1-1 of 1</div>
+        </div>
+        <div class="email-row unread" onclick="showView('email', null)">
+          <div class="checkbox" onclick="event.stopPropagation()"></div>
+          <div class="star" onclick="event.stopPropagation()">&#9734;</div>
+          <div class="sender">Florence Lantan</div>
+          <div class="snippet"><span class="subj">Your first accounts</span> <span class="preview">- Hi! We are officially starting your transition. The accounts in this folder are now yours to handle...</span></div>
+          <div class="time">8:42 AM</div>
+        </div>
+      </div>
+
+      <!-- Open email -->
+      <div class="view" id="view-email">
+        <div class="email-open">
+          <div class="email-open-toolbar">
+            <button class="icon-btn" title="Back to Inbox" onclick="showView('inbox', document.querySelector('[data-view=inbox]'))">
+              <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </button>
+            <button class="icon-btn" title="Archive"><svg viewBox="0 0 24 24"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg></button>
+            <button class="icon-btn" title="Delete"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+          </div>
+          <div class="email-subject-line">Your first accounts</div>
+          <div class="email-meta">
+            <div class="sender-avatar">F</div>
+            <div class="meta-text">
+              <div class="from">Florence Lantan <span>&lt;florence.lantan@trymeteor.com&gt;</span></div>
+              <div class="to">to me</div>
+            </div>
+            <div class="when">8:42 AM</div>
+          </div>
+          <div class="email-body">
+            <p>Hi!</p>
+            <p>We are officially starting your transition. The accounts in this folder are now yours to handle:</p>
+            <p>
+              <a class="folder-chip" href="https://drive.google.com/drive/folders/1zhzm6EMcc7vlRUP7p9Jz2QSyYcklU0D8" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                CS Accounts
+              </a>
+            </p>
+            <p>Inside you will find the employee log and each client folder. If you need any additional information about a client, or what was discussed during their sales call, just write to me and I can dig through my emails and notes.</p>
+            <p>About check-ins, we do not have an official tracker at the moment, but if anything comes up we can always jump on a call and follow up from there. My best advice would be to build your own tracker so you can stay organized from day 1.</p>
+            <p>Any feedback is welcome, and if you see anything that could be improved, I am open to hearing it.</p>
+            <p class="sig">Regards,<br>Florence</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty states -->
+      <div class="view" id="view-starred"><div class="empty-state"><div class="big">No starred messages</div></div></div>
+      <div class="view" id="view-snoozed"><div class="empty-state"><div class="big">Nothing here</div></div></div>
+      <div class="view" id="view-sent"><div class="empty-state"><div class="big">No sent messages</div></div></div>
+      <div class="view" id="view-drafts"><div class="empty-state"><div class="big">No drafts</div></div></div>
+      <div class="view" id="view-label-clients"><div class="empty-state"><div class="big">No conversations with this label</div></div></div>
+      <div class="view" id="view-label-notion"><div class="empty-state"><div class="big">No conversations with this label</div></div></div>
+      <div class="view" id="view-label-jp"><div class="empty-state"><div class="big">No conversations with this label</div></div></div>
+      <div class="view" id="view-label-florence"><div class="empty-state"><div class="big">No conversations with this label</div></div></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function showView(name, navEl) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('visible'));
+  document.getElementById('view-' + name).classList.add('visible');
+  document.querySelectorAll('.nav-item, .label-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  if (name === 'email') {
+    const inboxNav = document.querySelector('[data-view=inbox]');
+    if (inboxNav) inboxNav.classList.add('active');
+  }
+}
+</script>
+</body>
+</html>
