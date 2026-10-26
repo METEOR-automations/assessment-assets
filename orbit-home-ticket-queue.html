@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbit Home Support - Ticket queue</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23102542'/%3E%3Ccircle cx='16' cy='16' r='8.5' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3Ccircle cx='23' cy='10.5' r='3' fill='%2381B0F0'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#102542; --brand-2:#1B3A63; --orbit:#81B0F0;
+  --ink:#18212E; --muted:#5E6878; --faint:#8A93A1;
+  --line:#DDE2E9; --surface:#F4F6F9; --panel:#FFFFFF; --hover:#F0F3F7; --select:#E8EEF7;
+  --new-bg:#E3ECFB; --new-fg:#1D4F9E; --reo-bg:#FBEFD9; --reo-fg:#875809;
+  --closed-bg:#ECEFF3; --closed-fg:#4F5967;
+  --focus:#2F6FDB;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#E6EBF2; --muted:#9FAABA; --faint:#7C8798;
+    --line:#26334A; --surface:#0E1520; --panel:#141E2C; --hover:#18263A; --select:#1C2D47;
+    --new-bg:#1A2E50; --new-fg:#A9C6F5; --reo-bg:#3A2D12; --reo-fg:#F1C77A;
+    --closed-bg:#202B3B; --closed-fg:#AAB4C3;
+    --focus:#7FA9EE;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:"Figtree",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--surface);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* Top bar */
+.topbar{background:var(--brand);color:#fff;display:flex;align-items:center;gap:20px;padding:0 20px;height:56px;flex:none}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.01em;white-space:nowrap}
+.brand small{font-weight:500;opacity:.7;font-size:14px}
+.search{flex:1;max-width:440px;position:relative}
+.search input{width:100%;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.1);color:#fff;padding:0 12px 0 36px;font:inherit;font-size:14px}
+.search input::placeholder{color:rgba(255,255,255,.65)}
+.search svg{position:absolute;left:11px;top:10px;opacity:.7}
+.clock{margin-left:auto;font-size:14px;opacity:.85;white-space:nowrap}
+.me{width:32px;height:32px;border-radius:50%;background:var(--brand-2);border:1px solid rgba(255,255,255,.25);display:grid;place-items:center;font-size:12px;font-weight:600;flex:none}
+.notice{flex:none;background:var(--panel);border-bottom:1px solid var(--line);color:var(--muted);font-size:13.5px;padding:8px 20px}
+.notice strong{color:var(--ink);font-weight:600}
+
+/* Layout */
+.app{flex:1;display:grid;grid-template-columns:400px 1fr;min-height:0}
+
+.list{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.list-head{padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.list-head h1{font-size:18px;margin:0;font-weight:700}
+.list-head p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+.rows{overflow-y:auto;flex:1;margin:0;padding:0;list-style:none}
+.row{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;padding:12px 18px 12px 15px;border-left:3px solid transparent;cursor:pointer}
+.row:hover{background:var(--hover)}
+.row[aria-selected="true"]{background:var(--select);border-left-color:var(--brand)}
+@media (prefers-color-scheme: dark){.row[aria-selected="true"]{border-left-color:var(--orbit)}}
+.row-top{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.row-top .id{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.row-top .t{margin-left:auto;font-variant-numeric:tabular-nums}
+.row .subj{display:block;font-weight:600;font-size:14.5px;margin:3px 0 2px;line-height:1.35}
+.row .who{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;line-height:1.6}
+.chip.new{background:var(--new-bg);color:var(--new-fg)}
+.chip.reopened{background:var(--reo-bg);color:var(--reo-fg)}
+.chip.closed{background:var(--closed-bg);color:var(--closed-fg)}
+.empty{padding:40px 24px;color:var(--muted);text-align:center;font-size:14px}
+
+/* Detail */
+.detail{min-width:0;display:flex;flex-direction:column;min-height:0;background:var(--surface)}
+.detail-empty{margin:auto;color:var(--muted);text-align:center;padding:24px}
+.detail-empty svg{opacity:.5;margin-bottom:8px}
+.d-head{background:var(--panel);border-bottom:1px solid var(--line);padding:16px 24px}
+.d-nav{display:none;margin-bottom:10px}
+.d-top{display:flex;align-items:flex-start;gap:16px}
+.d-top>div:first-child{flex:1;min-width:0}
+.back{display:none;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13.5px}
+.pager{display:flex;gap:6px;flex:none}
+.pager button{border:1px solid var(--line);background:var(--panel);border-radius:8px;width:32px;height:32px;display:grid;place-items:center;cursor:pointer}
+.pager button:disabled{opacity:.4;cursor:default}
+.d-head h1{font-size:21px;line-height:1.3;margin:0 0 6px;font-weight:700}
+.d-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;color:var(--muted);font-size:13.5px}
+.d-meta .id{font-weight:600;color:var(--ink)}
+.d-body{flex:1;overflow-y:auto;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;padding:20px 24px 32px;align-items:start}
+.msg{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.msg-from{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--select);color:var(--ink);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.msg-from b{display:block;font-size:14.5px}
+.msg-from span{font-size:13px;color:var(--muted)}
+.msg p{margin:0 0 10px;max-width:68ch}
+.msg p:last-child{margin-bottom:0}
+
+.side{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h2{font-size:14px;margin:0 0 8px;font-weight:700}
+.card dl{margin:0;display:grid;grid-template-columns:96px 1fr;gap:6px 12px;font-size:13.5px}
+.card dt{color:var(--muted)}
+.card dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:break-word;hyphens:none}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.hist button{width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13.5px}
+.hist button:hover{border-color:var(--faint)}
+.hist .h1{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:12.5px}
+.hist .h1 b{color:var(--ink);font-weight:600}
+.hist .h2{display:block;margin-top:2px;line-height:1.35}
+.none{font-size:13.5px;color:var(--muted);margin:0}
+
+/* Previous ticket dialog */
+dialog{border:1px solid var(--line);border-radius:12px;padding:0;width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 64px);background:var(--panel);color:var(--ink);box-shadow:0 20px 50px rgba(8,18,34,.28)}
+dialog::backdrop{background:rgba(10,20,36,.45)}
+.dlg-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
+.dlg-head h2{margin:0;font-size:17px;line-height:1.35}
+.dlg-head p{margin:3px 0 0;color:var(--muted);font-size:13.5px}
+.close{margin-left:auto;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13.5px;flex:none}
+.dlg-body{padding:16px 20px 20px;overflow-y:auto}
+.dlg-body h3{font-size:13.5px;margin:0 0 6px;color:var(--muted);font-weight:600}
+.quote{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:0 0 16px;font-size:14px}
+.notes{margin:0;display:grid;grid-template-columns:150px 1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:14px}
+.notes dt,.notes dd{margin:0;padding:9px 12px;border-bottom:1px solid var(--line)}
+.notes dt{background:var(--surface);color:var(--muted);font-weight:600}
+.notes dt:nth-last-of-type(1),.notes dd:last-of-type{border-bottom:0}
+
+@media (max-width:1180px){.app{grid-template-columns:340px 1fr}.d-body{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .detail{display:none}
+  .app.open .list{display:none}
+  .app.open .detail{display:flex}
+  .d-nav{display:block}
+  .back{display:inline-block}
+  .clock{display:none}
+  .brand small{display:none}
+  .d-head,.d-body{padding-left:16px;padding-right:16px}
+  .notes{grid-template-columns:1fr}
+  .notes dt{border-bottom:0;padding-bottom:2px}
+}
+@media (prefers-reduced-motion: no-preference){.row,.hist button{transition:background-color .12s ease,border-color .12s ease}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="23.2" cy="10.2" r="3.2" fill="#81B0F0"/></svg>
+    Orbit Home <small>Support</small>
+  </div>
+  <label class="search">
+    <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5.2" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M11 11l3.5 3.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <input id="q" type="search" placeholder="Search tickets" aria-label="Search tickets" autocomplete="off">
+  </label>
+  <div class="clock">Tuesday, 9:15 AM</div>
+  <div class="me" title="You" aria-label="Signed in">You</div>
+</header>
+<div class="notice"><strong>View-only access.</strong> Record your actions and replies in the Ticket Queue Review sheet.</div>
+
+<main class="app" id="app">
+
+  <section class="list" aria-label="Tickets">
+    <div class="list-head">
+      <h1 id="list-title">Support queue</h1>
+      <p id="list-sub">10 open tickets, oldest first</p>
+    </div>
+    <ul class="rows" id="rows" role="listbox" aria-label="Tickets"></ul>
+  </section>
+
+  <section class="detail" id="detail" aria-live="polite">
+    <div class="detail-empty">
+      <svg width="40" height="40" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="23.2" cy="10.2" r="3" fill="currentColor"/></svg>
+      <p>Select a ticket to read it.</p>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dlg-head">
+    <div><h2 id="dlg-title"></h2><p id="dlg-sub"></p></div>
+    <button class="close" id="dlg-close">Close</button>
+  </div>
+  <div class="dlg-body" id="dlg-body"></div>
+</dialog>
+
+<script>
+const NOW = 9*60+15;
+
+const HISTORY = {
+  "T-163": {
+    subject: "7 units stop auto-emptying",
+    meta: "Closed by Kevin L., 3 weeks ago",
+    message: "7 of our 18 Orbit Duo units show Bag full right after we empty them, and they stop auto-emptying.",
+    notes: [
+      ["Verified", "Email on order, Dana Wu"],
+      ["Product / order", "Orbit Duo × 18, ORB-44310"],
+      ["Issue", "7 units show “Bag full” right after emptying and stop auto-emptying. Serials: OD-60411, OD-60412, OD-60415, OD-60419, OD-60423, OD-60427, OD-60430"],
+      ["Actions taken", "Sent bag replacement steps."],
+      ["Resolution", "Customer to replace bags."],
+      ["Next steps / escalation", "None"]
+    ]
+  },
+  "T-184": {
+    subject: "Bag full error came back on the same units",
+    meta: "Closed by Rachel P., 10 days ago",
+    message: "We replaced the bags on all 7 units like we were told. The Bag full message came back within a day.",
+    notes: [
+      ["Verified", "Email on order"],
+      ["Product / order", "Orbit Duo × 18, ORB-44310"],
+      ["Issue", "Same 7 units. “Bag full” returns after new bags."],
+      ["Actions taken", "Asked customer to clear 1.5 ft around each dock and replace the bags again."],
+      ["Resolution", "Pending customer"],
+      ["Next steps / escalation", "None"]
+    ]
+  },
+  "T-176": {
+    subject: "Return request",
+    meta: "Closed by Kevin L., 3 weeks ago",
+    message: "I’d like to return my Orbit Ultra. It’s too big for my apartment. Everything is still in the original box.",
+    notes: [
+      ["Verified", "Order number ORB-45521"],
+      ["Product / order", "Orbit Ultra, ORB-45521"],
+      ["Issue", "Return request, day 21 since delivery. Unit too large for the space."],
+      ["Actions taken", "Confirmed eligibility (within 30 days, original packaging). Told customer the return label will arrive by email and the refund takes 5 to 10 business days after the warehouse receives the unit."],
+      ["Resolution", "Resolved"],
+      ["Next steps / escalation", "None"]
+    ]
+  },
+  "T-122": {
+    subject: "Bin full message after emptying",
+    meta: "Closed by Rachel P., 4 months ago",
+    message: "My robot keeps saying Bin full even though I just emptied it.",
+    notes: [
+      ["Verified", "Order number ORB-41207"],
+      ["Product / order", "Orbit One, ORB-41207"],
+      ["Issue", "“Bin full” message right after emptying."],
+      ["Actions taken", "Customer emptied the bin fully and pressed the Clean button. Error cleared."],
+      ["Resolution", "Resolved. Bin was not fully emptied."],
+      ["Next steps / escalation", "None"]
+    ]
+  },
+  "T-131": {
+    subject: "Keep the Duo from mopping my rug",
+    meta: "Closed by Kevin L., 3 months ago",
+    message: "How do I stop the Duo from mopping my wool rug in the living room?",
+    notes: [
+      ["Verified", "Not verified (product question)"],
+      ["Product / order", "Orbit Duo"],
+      ["Issue", "Wants to keep the Duo from mopping a wool rug."],
+      ["Actions taken", "Explained the Duo does not lift its mop pad. Walked customer through setting a mop-only no-go zone over the rug. Customer confirmed the zone shows on the map."],
+      ["Resolution", "Resolved"],
+      ["Next steps / escalation", "None"]
+    ]
+  },
+  "C-48213": {
+    subject: "Duo offline after new router",
+    meta: "Chat, solved by Sofia M., yesterday",
+    message: "My Duo shows Offline since we got a new router.",
+    notes: [
+      ["Verified", "Email on order"],
+      ["Product / order", "Orbit Duo, ORB-42659"],
+      ["Issue", "Robot Offline after router replacement."],
+      ["Actions taken", "Walked customer through Change Network. Robot shows Connected."],
+      ["Resolution", "Resolved in chat"],
+      ["Next steps / escalation", "None"]
+    ]
+  }
+};
+
+const TICKETS = [
+  { id:"T-201", time:"7:12 AM", min:7*60+12, status:"New", customer:"Morgan Reed", email:"m•••@•••.com", account:"Standard",
+    subject:"Robot is hot and smells like burning",
+    body:["I took my Orbit Ultra off the station this morning because it felt really hot, and now there’s a smell like burning plastic coming from underneath. I turned it off.","Is it safe to keep in the house? What do I do now?"],
+    device:[["Model","Orbit Ultra (OH-500)"],["Serial","OU-40217"],["Firmware","3.7.9 (installed 41 days ago)"],["App version","6.4.1"],["Status","Offline (last seen today, 7:04 AM)"]],
+    order:[["Order","ORB-48802"],["Items","Orbit Ultra"],["Delivered","7 months ago"]],
+    history:[] },
+  { id:"T-204", time:"7:31 AM", min:7*60+31, status:"New", customer:"Evan Brooks", email:"e•••@•••.com", account:"Standard",
+    subject:"My saved map disappeared after the update",
+    body:["My Orbit Duo updated overnight and now the app wants me to create a first map. I had 3 rooms named and 2 no-go zones.","Is there a way to get the old map back without starting over?"],
+    device:[["Model","Orbit Duo (OH-300)"],["Serial","OD-55130"],["Firmware","3.8.2 (installed today, 2:10 AM)"],["App version","6.4.1"],["Status","Connected"]],
+    order:[["Order","ORB-47115"],["Items","Orbit Duo"],["Delivered","4 months ago"]],
+    history:[] },
+  { id:"T-205", time:"7:48 AM", min:7*60+48, status:"Reopened", customer:"Dana Wu", email:"d•••@•••.com", account:"Business: BrightStay Hotels",
+    subject:"Third follow-up: seven hotel units still unresolved",
+    body:["Following up again on T-163 and T-184. We bought 18 Orbit Duo units for our properties and 7 of them still don’t auto-empty. We’ve replaced the bags and cleared the space around the docks twice, like we were told.","Please assign one person to this and give me an actual plan, not another article."],
+    device:[["On account","18 × Orbit Duo (OH-300)"],["Firmware","3.7.9 (installed 39 days ago)"],["App version","6.4.1"],["Status","Connected (18 of 18)"]],
+    order:[["Order","ORB-44310"],["Items","18 × Orbit Duo"],["Delivered","2 months ago"]],
+    history:["T-163","T-184"] },
+  { id:"T-209", time:"8:02 AM", min:8*60+2, status:"New", customer:"Mia Foster", email:"m•••@•••.com", account:"Standard",
+    subject:"Return question, no rush",
+    body:["Hi! The Duo works fine but it’s louder than I expected in my apartment. I saw I have 60 days to return it, so no rush at all, but I’d like to start the return whenever someone has a minute. I still have the box and all the accessories."],
+    device:[["Model","Orbit Duo (OH-300)"],["Serial","OD-58841"],["Firmware","3.7.9 (installed 29 days ago)"],["App version","6.4.0"],["Status","Connected"]],
+    order:[["Order","ORB-46990"],["Items","Orbit Duo"],["Delivered","29 days ago"]],
+    history:[] },
+  { id:"T-210", time:"8:15 AM", min:8*60+15, status:"New", customer:"Chris Nolan", email:"c•••@•••.com", phone:"(614) 555-0148", account:"Standard",
+    subject:"Not working",
+    body:["It doesn’t work. I already tried everything. Call me."],
+    device:[["Model","Orbit One (OH-100)"],["Serial","ON-21876"],["Firmware","3.7.9 (installed 40 days ago)"],["App version","6.3.2"],["Status","Offline (last seen 2 days ago)"]],
+    order:[["Order","ORB-41207"],["Items","Orbit One"],["Delivered","5 months ago"]],
+    history:["T-122"] },
+  { id:"T-212", time:"8:26 AM", min:8*60+26, status:"Reopened", customer:"Noah Bennett", email:"n•••@•••.com", account:"Standard",
+    subject:"Refund follow-up: return delivered eight business days ago",
+    body:["UPS shows my return was delivered to your warehouse 8 business days ago. On T-176 I was told the refund takes 5 to 10 business days after the warehouse gets it, but I haven’t received any email from Billing.","Can someone actually check instead of sending me the policy again?"],
+    device:[["Model","Orbit Ultra (OH-500)"],["Serial","OU-38904"],["App version","6.4.1"],["Status","Offline (last seen 3 weeks ago)"]],
+    order:[["Order","ORB-45521"],["Items","Orbit Ultra"],["Delivered","6 weeks ago"],["Return","Delivered to warehouse 8 business days ago (UPS)"]],
+    history:["T-176"] },
+  { id:"T-214", time:"8:37 AM", min:8*60+37, status:"New", customer:"Jasmine Cole", email:"j•••@•••.com", account:"Standard",
+    subject:"No-mop zone gone and the robot soaked my rug",
+    body:["This morning my Duo mopped right over my wool rug. The no-mop zone I set around it is gone from the map. I drew it again, but I need to know why it disappeared and whether it will happen again.","The rug is soaked."],
+    device:[["Model","Orbit Duo (OH-300)"],["Serial","OD-61022"],["Firmware","3.8.2 (installed today, 1:52 AM)"],["App version","6.4.1"],["Status","Connected"]],
+    order:[["Order","ORB-43380"],["Items","Orbit Duo"],["Delivered","3 months ago"]],
+    history:["T-131"] },
+  { id:"T-219", time:"8:49 AM", min:8*60+49, status:"New", customer:"Renee Walsh", email:"r•••@•••.com", account:"Standard",
+    subject:"Thank you to the agent who helped me yesterday",
+    body:["Just wanted to say Sofia was so patient helping me get my Duo back on Wi-Fi after we changed routers yesterday. Everything works now.","Also, where can I buy extra filters? No rush."],
+    device:[["Model","Orbit Duo (OH-300)"],["Serial","OD-57310"],["Firmware","3.7.9 (installed 41 days ago)"],["App version","6.4.1"],["Status","Connected"]],
+    order:[["Order","ORB-42659"],["Items","Orbit Duo"],["Delivered","8 months ago"]],
+    history:["C-48213"] },
+  { id:"T-221", time:"8:58 AM", min:8*60+58, status:"New", customer:"Nadia Flores", email:"n•••@•••.com", account:"Standard",
+    subject:"Map stuck on loading since this morning",
+    body:["Since this morning the map page only says Loading map. Cleaning still starts from the button, but I can’t pick rooms or see my no-go zones.","The station hasn’t moved and the app says the robot is connected."],
+    device:[["Model","Orbit Ultra (OH-500)"],["Serial","OU-41553"],["Firmware","3.8.2 (installed today, 1:47 AM)"],["App version","6.4.1"],["Status","Connected"]],
+    order:[["Order","ORB-44987"],["Items","Orbit Ultra"],["Delivered","2 months ago"]],
+    history:[] },
+  { id:"T-223", time:"9:06 AM", min:9*60+6, status:"New", customer:"Leah Ross", email:"l•••@•••.com", account:"Standard",
+    subject:"Password reset emails I did not request",
+    body:["I got 4 password reset emails overnight that I didn’t ask for, and the app shows a login from a device I don’t recognize. My Orbit Ultra is linked to this account and it has a camera.","What should I do right now?"],
+    device:[["Model","Orbit Ultra (OH-500)"],["Serial","OU-39760"],["Firmware","3.7.9 (installed 41 days ago)"],["App version","6.4.1"],["Status","Connected"]],
+    order:[["Order","ORB-40115"],["Items","Orbit Ultra"],["Delivered","9 months ago"]],
+    history:[] }
+];
+
+const $ = s => document.querySelector(s);
+const el = (tag, attrs={}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) n.append(k.nodeType ? k : document.createTextNode(k));
+  return n;
+};
+const waited = m => { const d = NOW - m, h = Math.floor(d/60), r = d%60; return h ? `Waiting ${h}h ${r}m` : `Waiting ${r}m`; };
+const initials = n => n.split(" ").map(p => p[0]).join("").slice(0,2);
+const chip = s => el("span", {class:"chip " + s.toLowerCase()}, s);
+
+let query = "", currentId = null;
+
+function visible(){
+  const q = query.trim().toLowerCase();
+  if (!q) return TICKETS;
+  return TICKETS.filter(t => [t.id,t.subject,t.customer,t.account,...t.body].join(" ").toLowerCase().includes(q));
+}
+
+function renderList(){
+  const list = visible(), ul = $("#rows");
+  ul.replaceChildren();
+  $("#list-sub").textContent = query ? `${list.length} of 10 tickets match` : "10 open tickets, oldest first";
+  if (!list.length) { ul.append(el("li", {class:"empty"}, "No tickets match your search.")); return; }
+  list.forEach(t => {
+    const b = el("button", {class:"row", role:"option", "aria-selected": String(t.id === currentId), "data-id": t.id, onclick: () => open(t.id)},
+      el("span", {class:"row-top"}, el("span", {class:"id"}, t.id), chip(t.status), el("span", {class:"t"}, t.time)),
+      el("span", {class:"subj"}, t.subject),
+      el("span", {class:"who"}, el("span", {}, t.customer), el("span", {}, waited(t.min)))
+    );
+    b.addEventListener("keydown", e => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const rows = [...document.querySelectorAll(".row")], i = rows.indexOf(b);
+        const nxt = rows[i + (e.key === "ArrowDown" ? 1 : -1)];
+        if (nxt) nxt.focus();
+      }
+    });
+    ul.append(el("li", {}, b));
+  });
+}
+
+function dl(pairs){
+  const d = el("dl");
+  pairs.forEach(([k,v]) => { d.append(el("dt", {}, k), el("dd", {}, v)); });
+  return d;
+}
+
+function open(id){
+  const t = TICKETS.find(x => x.id === id);
+  if (!t) return;
+  currentId = id;
+  document.querySelectorAll(".row").forEach(r => r.setAttribute("aria-selected", String(r.dataset.id === id)));
+  const idx = TICKETS.indexOf(t);
+  const prev = el("button", {"aria-label":"Previous ticket", title:"Previous ticket (←)", onclick: () => open(TICKETS[idx-1].id)}, "‹");
+  const next = el("button", {"aria-label":"Next ticket", title:"Next ticket (→)", onclick: () => open(TICKETS[idx+1].id)}, "›");
+  if (idx === 0) prev.disabled = true;
+  if (idx === TICKETS.length-1) next.disabled = true;
+
+  const customer = [["Name", t.customer],["Email", t.email]];
+  if (t.phone) customer.push(["Phone", t.phone]);
+  customer.push(["Account", t.account]);
+
+  const hist = t.history.length
+    ? el("ul", {class:"hist"}, ...t.history.map(h => {
+        const H = HISTORY[h];
+        return el("li", {}, el("button", {onclick: () => showHistory(h)},
+          el("span", {class:"h1"}, el("b", {}, h), el("span", {}, H.meta.replace(/^Closed by [^,]+, |^Chat, solved by [^,]+, /, ""))),
+          el("span", {class:"h2"}, H.subject)));
+      }))
+    : el("p", {class:"none"}, "No previous tickets.");
+
+  const head = el("div", {class:"d-head"},
+    el("div", {class:"d-nav"}, el("button", {class:"back", onclick: closeDetail}, "‹ All tickets")),
+    el("div", {class:"d-top"},
+      el("div", {},
+        el("h1", {}, t.subject),
+        el("div", {class:"d-meta"}, el("span", {class:"id"}, t.id), chip(t.status), el("span", {}, `Received ${t.time} by email`), el("span", {}, waited(t.min)))),
+      el("div", {class:"pager"}, prev, next))
+  );
+  const msg = el("article", {class:"msg"},
+    el("div", {class:"msg-from"}, el("div", {class:"avatar"}, initials(t.customer)),
+      el("div", {}, el("b", {}, t.customer), el("span", {}, `Today, ${t.time}`))),
+    ...t.body.map(p => el("p", {}, p))
+  );
+  const side = el("aside", {class:"side"},
+    el("section", {class:"card"}, el("h2", {}, "Customer"), dl(customer)),
+    el("section", {class:"card"}, el("h2", {}, t.device.length && t.device[0][0] === "On account" ? "Devices" : "Device"), dl(t.device)),
+    el("section", {class:"card"}, el("h2", {}, "Order"), dl(t.order)),
+    el("section", {class:"card"}, el("h2", {}, "Previous tickets"), hist)
+  );
+  $("#detail").replaceChildren(head, el("div", {class:"d-body"}, msg, side));
+  $("#app").classList.add("open");
+  $("#detail .d-body").scrollTop = 0;
+}
+
+function closeDetail(){
+  $("#app").classList.remove("open");
+  const r = document.querySelector(`.row[data-id="${currentId}"]`);
+  if (r) r.focus();
+}
+
+function showHistory(h){
+  const H = HISTORY[h];
+  $("#dlg-title").textContent = `${h}: ${H.subject}`;
+  $("#dlg-sub").textContent = H.meta;
+  const notes = el("dl", {class:"notes"});
+  H.notes.forEach(([k,v]) => notes.append(el("dt", {}, k), el("dd", {}, v)));
+  $("#dlg-body").replaceChildren(
+    el("h3", {}, "Customer message"), el("p", {class:"quote"}, H.message),
+    el("h3", {}, "Agent notes"), notes
+  );
+  $("#dlg").showModal();
+}
+
+$("#dlg-close").addEventListener("click", () => $("#dlg").close());
+$("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg").close(); });
+$("#q").addEventListener("input", e => { query = e.target.value; renderList(); });
+document.addEventListener("keydown", e => {
+  if ($("#dlg").open || !currentId || ["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
+  const i = TICKETS.findIndex(t => t.id === currentId);
+  if (e.key === "ArrowRight" && i < TICKETS.length-1) open(TICKETS[i+1].id);
+  if (e.key === "ArrowLeft" && i > 0) open(TICKETS[i-1].id);
+});
+
+renderList();
+</script>
+</body>
+</html>
