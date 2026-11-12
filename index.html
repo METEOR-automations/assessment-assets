@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Linear 1 Help Desk</title>
+<style>
+  :root{
+    --rail:#2d3e50; --rail-hover:#3e5266; --rail-active:#ff7a59;
+    --bg:#f5f8fa; --panel:#ffffff; --line:#cbd6e2; --line-soft:#eaf0f6; --text:#33475b; --muted:#7c98b6;
+    --link:#0091ae; --orange:#ff7a59; --orange-dark:#e8613f; --chip:#eaf0f6;
+    --new:#00bda5; --open:#f5c26b; --note:#fef8e6; --note-line:#f5c26b;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:inherit}
+  html,body{height:100%;margin:0}
+  body{font-family:"Avenir Next","Segoe UI",-apple-system,Roboto,Helvetica,Arial,sans-serif;font-size:14px;color:var(--text);background:var(--bg);display:flex;flex-direction:column}
+  a{color:var(--link);text-decoration:none}
+  a:hover{text-decoration:underline}
+  button,input,select{font:inherit}
+  /* top bar */
+  .topbar{height:52px;background:var(--rail);display:flex;align-items:center;gap:14px;padding:0 16px 0 0;color:#fff;flex-shrink:0}
+  .topbar .search{display:flex;align-items:center;gap:8px;background:#fff;border-radius:3px;height:34px;padding:0 10px;width:360px;max-width:50vw;margin-left:16px}
+  .topbar .search svg{width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2}
+  .topbar .search input{border:0;outline:0;width:100%;color:var(--text)}
+  .topbar .date{margin-left:auto;font-size:13px;color:#cbd6e2}
+  .topbar .date b{color:#fff;font-weight:600}
+  .topbar .acct{font-size:13px;color:#cbd6e2;padding-left:14px;border-left:1px solid #4a5f75}
+  .frame{display:flex;flex:1;min-height:0}
+  /* icon rail */
+  .rail{width:180px;background:var(--rail);display:flex;flex-direction:column;padding:12px 8px;gap:2px;flex-shrink:0}
+  .rail a{height:38px;border-radius:4px;display:flex;align-items:center;gap:10px;padding:0 10px;color:#cbd6e2;position:relative;font-size:13px;font-weight:600}
+  .rail a svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .rail a:hover{background:var(--rail-hover);color:#fff;text-decoration:none}
+  .rail a.active{color:#fff;background:var(--rail-hover)}
+  .rail a.active::before{content:"";position:absolute;left:-8px;top:8px;bottom:8px;width:3px;background:var(--rail-active);border-radius:2px}
+  main{flex:1;min-width:0;overflow:auto}
+  .page{padding:22px 28px;max-width:1500px}
+  h1{font-size:22px;font-weight:600;margin:0 0 14px;letter-spacing:-.01em}
+  h2{font-size:14px;font-weight:600;margin:0 0 8px}
+  /* tabs */
+  .tabs{display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .tabs div{padding:9px 16px;font-weight:600;font-size:13px;color:var(--muted);border:1px solid transparent;border-bottom:0;border-radius:4px 4px 0 0}
+  .tabs div.on{background:#fff;color:var(--text);border-color:var(--line);margin-bottom:-1px}
+  /* toolbar */
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .toolbar .view{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:3px;padding:6px 10px;font-size:13px;color:var(--text)}
+  .toolbar .view svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
+  .toolbar select{border:1px solid var(--line);background:#fff;border-radius:3px;padding:6px 10px;color:var(--link);font-weight:600;font-size:13px}
+  .toolbar .count{margin-left:auto;color:var(--muted);font-size:13px}
+  /* table */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  th{font-size:11px;letter-spacing:.03em;color:var(--text);font-weight:600;background:#f5f8fa;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+  th .dir{color:var(--muted);margin-left:4px;font-size:10px}
+  th.chk,td.chk{width:34px;padding-left:14px}
+  td.chk input,th.chk input{accent-color:var(--orange)}
+  tr.row:hover td{background:#f5f8fa}
+  td.name{font-weight:600;white-space:nowrap}
+  .av{display:inline-flex;width:24px;height:24px;border-radius:50%;background:#dbe5ee;color:#33475b;font-size:10px;font-weight:700;align-items:center;justify-content:center;margin-right:8px;vertical-align:middle;letter-spacing:.02em}
+  .av.c-hartwell{background:#c7e3f2}.av.c-ridgeline{background:#cfeee7}.av.c-brennan{background:#e4dcf2}.av.c-northway{background:#fde2d2}.av.c-copperkettle{background:#fbe9b7}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+  .status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .status.New::before{background:var(--new)}
+  .status.Open::before{background:var(--open)}
+  .dim{color:var(--muted)}
+  .empty{padding:36px;text-align:center;color:var(--muted)}
+  /* record layout */
+  .crumb{font-size:13px;margin-bottom:12px;color:var(--muted)}
+  .record{display:grid;grid-template-columns:300px minmax(0,1fr) 320px;gap:16px;align-items:start}
+  .col .panel{margin-bottom:14px}
+  .props{padding:16px}
+  .props h1{font-size:18px;margin:0 0 4px}
+  .props .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+  dl{margin:0}
+  dt{font-size:12px;color:var(--muted);margin-top:10px}
+  dd{margin:2px 0 0;font-size:13px;line-height:1.45}
+  .timeline-head{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:600;font-size:13px}
+  .msg{padding:16px 18px;border-bottom:1px solid var(--line-soft)}
+  .msg:last-child{border-bottom:none}
+  .msg .from{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-size:13px}
+  .msg .from b{font-weight:600}
+  .msg .addr{color:var(--muted);font-weight:400}
+  .msg .when{color:var(--muted);font-size:12px}
+  .msg p{margin:0 0 10px;line-height:1.55;white-space:pre-wrap;font-size:13px}
+  .msg p:last-child{margin-bottom:0}
+  .msg.note{background:var(--note);border-left:3px solid var(--note-line)}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:3px;margin-left:8px;vertical-align:middle;background:var(--chip);color:var(--text)}
+  .msg.note .tag{background:#fbe1a6;color:#6b4e00}
+  .fwd{margin-top:10px;padding:10px 12px;border-left:3px solid var(--line);color:#516f90;font-size:13px}
+  .activity{padding:4px 18px 10px}
+  .activity ul{margin:0;padding:0;list-style:none}
+  .activity li{padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:13px;line-height:1.5;display:flex;gap:14px}
+  .activity li:last-child{border-bottom:none}
+  .activity .t{color:var(--muted);flex:0 0 150px}
+  .side .panel{padding:14px 16px}
+  .side .panel h2 a{color:var(--text)}
+  .side ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.45}
+  .side li{margin:3px 0}
+  /* documents */
+  .doc{padding:26px 30px;max-width:840px;line-height:1.6;font-size:14px}
+  .doc h1{margin-bottom:6px}
+  .doc h2{margin:22px 0 6px;font-size:15px}
+  .doc ul{padding-left:20px}
+  .doc li{margin:4px 0}
+  .doc .pending{background:#fff3cd;border:1px dashed #d8b24a;padding:8px 12px;border-radius:4px;font-size:13px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .card{padding:16px}
+  .card .sub{color:var(--muted);font-size:13px;margin-bottom:8px}
+  .card ul{margin:6px 0 0;padding-left:18px;font-size:13px}
+  .card li{margin:3px 0}
+  @media (max-width:1300px){
+    .record{grid-template-columns:260px minmax(0,1fr)}
+    .record .side{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+    .record .side .panel{margin-bottom:0}
+  }
+  @media (max-width:900px){.record{grid-template-columns:minmax(0,1fr)}}
+  @media (max-width:760px){
+    .frame{flex-direction:column}
+    .rail{width:auto;flex-direction:row;padding:6px 8px;overflow-x:auto}
+    .rail a{height:34px}
+    .rail a.active::before{display:none}
+    .topbar .search{width:200px}.topbar .acct,.topbar .date span{display:none}
+    .page{padding:14px}
+    table{font-size:12px}
+    th:nth-child(8),td:nth-child(8),th:nth-child(9),td:nth-child(9){display:none}
+  }
+  :focus-visible{outline:2px solid var(--link);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gsearch" type="search" placeholder="Search tickets" aria-label="Search tickets"></label>
+  <div class="date"><span>Monday, </span><b>9:00 AM ET</b></div>
+  <div class="acct">Linear 1 Help Desk</div>
+</div>
+<div class="frame">
+<nav class="rail" aria-label="Main">
+  <a href="#tickets" data-nav="tickets" aria-label="Tickets"><svg viewBox="0 0 24 24"><path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z"/><path d="M12 7v12"/></svg><span>Tickets</span></a>
+  <a href="#contacts" data-nav="contacts" aria-label="Contacts"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Contacts</span></a>
+  <a href="#companies" data-nav="companies" aria-label="Companies"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V5l7-2v18M12 21V9l7 2v10"/></svg><span>Companies</span></a>
+  <a href="#documents" data-nav="documents" aria-label="Documents"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg><span>Documents</span></a>
+</nav>
+<main><div class="page" id="view"></div></main>
+</div>
+
+<script>
+const T2 = "Carlos";
+
+const companies = {
+  hartwell:{name:"Hartwell & Associates",type:"Accounting firm",users:35,locations:"1 office (Dublin, OH)",hours:"Mon to Fri, 8:00 AM to 6:00 PM ET",authorized:"Dana Price, Office Manager",
+    notes:["Dana Price and Laura Méndez may authorize standard new-user setup, including account creation, license assignment, and membership in the standard groups for the employee's team. Access to financial, HR, or ownership data, or any administrative role, requires Dana's written approval. Additional license purchases require Dana's written approval.","Windows 11 migration completed."]},
+  ridgeline:{name:"Ridgeline Family Medicine",type:"Medical practice",users:22,locations:"2 locations (Main St, Oak Ave)",hours:"Mon to Fri, 7:30 AM to 5:00 PM ET",authorized:"Kevin Osei, Practice Administrator",
+    notes:["Approved temporary measure when Main St phones are down: forward the Main St main line to the practice mobile on file (614-555-0190). Pre-approved by Kevin Osei.","Each location has phone equipment managed by Linear 1.","Contract renewal next quarter."]},
+  brennan:{name:"Brennan Metalworks",type:"Manufacturing",users:60,locations:"1 plant, 2 shifts",hours:"Mon to Fri, 6:00 AM to 10:00 PM ET",authorized:"Rob Jansen, Operations Manager",
+    notes:["Plant floor equipment is not restarted without notifying the shift supervisor.","Security camera project pending, on hold until next quarter.","Supplier ordering handled by purchasing (Tom Halloran)."]},
+  northway:{name:"Northway Wealth Partners",type:"Wealth management",users:12,locations:"1 office",hours:"Mon to Fri, 9:00 AM to 5:00 PM ET",authorized:"Megan Albright, Managing Partner",
+    notes:["Users with access to client data require Megan's approval for access changes.","Email signatures are managed centrally by Linear 1.","Website redesign vendor has guest access until the end of next month."]},
+  copperkettle:{name:"Copper Kettle Kitchen",type:"Restaurant group",users:15,locations:"3 locations (Westgate, Eastgate, Downtown)",hours:"Westgate: Mon to Sun, 11:00 AM to 11:00 PM ET. Eastgate and Downtown: Tue to Sun, 11:00 AM to 11:00 PM ET",authorized:"Nina Castellano, Owner",
+    notes:["Each location has phone equipment managed by Linear 1.","POS replacement planned for next quarter.","Marco Reyes (Westgate GM) can approve phone changes for Westgate."]}
+};
+
+const contacts = {
+  dprice:{name:"Dana Price",title:"Office Manager",email:"dprice@hartwellcpa.com",phone:"614-555-0141",company:"hartwell"},
+  lmendez:{name:"Laura Méndez",title:"Accounting Manager",email:"lmendez@hartwellcpa.com",phone:"614-555-0143",company:"hartwell"},
+  pshah:{name:"Priya Shah",title:"Audit Manager",email:"pshah@hartwellcpa.com",phone:"614-555-0147",company:"hartwell"},
+  kosei:{name:"Kevin Osei",title:"Practice Administrator",email:"kosei@ridgelinefm.com",phone:"614-555-0188",location:"Oak Ave",company:"ridgeline"},
+  pnair:{name:"Priya Nair",title:"Front Desk Coordinator",email:"pnair@ridgelinefm.com",phone:"",location:"Main St",company:"ridgeline"},
+  areeves:{name:"Dr. Alan Reeves",title:"Physician",email:"areeves@ridgelinefm.com",phone:"",location:"Main St",company:"ridgeline"},
+  rjansen:{name:"Rob Jansen",title:"Operations Manager",email:"rjansen@brennanmw.com",phone:"614-555-0160",company:"brennan"},
+  thalloran:{name:"Tom Halloran",title:"Purchasing",email:"thalloran@brennanmw.com",phone:"",company:"brennan"},
+  lherrera:{name:"Luis Herrera",title:"Shift Supervisor",email:"lherrera@brennanmw.com",phone:"",company:"brennan"},
+  malbright:{name:"Megan Albright",title:"Managing Partner",email:"malbright@northwaywp.com",phone:"614-555-0120",company:"northway"},
+  cdunn:{name:"Chris Dunn",title:"Designer",email:"cdunn@northwaywp.com",phone:"614-555-0126 (mobile)",company:"northway"},
+  rvance:{name:"Robert Vance",title:"Senior Advisor",email:"rvance@northwaywp.com",phone:"",company:"northway"},
+  nina:{name:"Nina Castellano",title:"Owner",email:"nina@copperkettlekitchen.com",phone:"614-555-0170",company:"copperkettle"},
+  marco:{name:"Marco Reyes",title:"General Manager, Westgate",email:"marco@copperkettlekitchen.com",phone:"614-555-0177",company:"copperkettle"}
+};
+
+// Tickets, in order of arrival. Each message: from (display name), addr (email), when, body, kind: "email" | "reply" | "note"
+const tickets = [
+ {id:41207,subject:"FYI: Monica starting",company:"hartwell",contact:"lmendez",status:"New",owner:"Unassigned",created:"Thu, 3:20 PM",updated:"Fri, 5:10 PM",
+  msgs:[
+   {kind:"email",from:"Laura Méndez",addr:"lmendez@hartwellcpa.com",when:"Thu, 3:20 PM",body:"Hi team, FYI we have a new staff accountant joining us, Monica Vela. She'll be on the audit side under Priya Shah. She needs the usual: email, access to the Audit team folder, and the Hartwell Staff group. Her personal email for the welcome stuff is monica.vela88@outlook.com. Let me know if you need anything else. Thanks!\n\nLaura"},
+   {kind:"email",from:"Dana Price",addr:"dprice@hartwellcpa.com",when:"Thu, 3:41 PM",body:"Approved, go ahead.\n\nDana"},
+   {kind:"email",from:"Laura Méndez",addr:"lmendez@hartwellcpa.com",when:"Fri, 5:10 PM",body:"Forgot to mention, she starts Monday. She'll be in at 10 to get set up at her desk, so if her login could be ready by then that would be great. Have a good weekend!"}
+  ],activity:[]},
+ {id:41215,subject:"Holiday greeting",company:"ridgeline",contact:"kosei",status:"New",owner:"Unassigned",created:"Fri, 4:50 PM",updated:"Fri, 4:50 PM",
+  msgs:[
+   {kind:"email",from:"Kevin Osei",addr:"kosei@ridgelinefm.com",when:"Fri, 4:50 PM",body:"Hello, we need the after-hours greeting updated for Thanksgiving. Both locations. Should go live the Wednesday before Thanksgiving at 5 PM and go back to normal the Monday after at 7:30 AM. Text below.\n\n\"Thank you for calling Ridgeline Family Medicine. Our offices are closed for the Thanksgiving holiday and will reopen Monday at 7:30 AM. If this is a medical emergency, please hang up and dial 911. For prescription refills, please use the patient portal.\"\n\nAlso, our new nurse Amara starts in 2 weeks, I'll send her info separately.\n\nThanks, Kevin"}
+  ],activity:[]},
+ {id:41218,subject:"Phones down at Westgate",company:"copperkettle",contact:"marco",status:"Open",owner:T2,created:"Sat, 9:48 PM",updated:"Sat, 10:34 PM",
+  msgs:[
+   {kind:"email",from:"Marco Reyes",addr:"marco@copperkettlekitchen.com",when:"Sat, 9:48 PM",body:"Our phones at Westgate just died in the middle of dinner service. No dial tone on any of them, people calling for takeout are getting nothing. Eastgate says theirs are fine. Need help asap, we're still open till 11.\n\nMarco (GM Westgate) 614-555-0177"},
+   {kind:"reply",from:"Carlos (Tier 2), on-call",addr:"support@linear1.example",when:"Sat, 10:12 PM",body:"Marco, got it. Calling you now."},
+   {kind:"note",from:"Carlos, on-call",addr:"",when:"Sat, 10:34 PM",body:"Spoke with Marco. All 4 handsets at Westgate show no registration. The on-site phone equipment has power, but the link light is off. Had Marco power cycle it, no change. As a temporary measure, forwarded the Westgate main line to Marco's cell (614-555-0177) so takeout calls reach them. Marco confirmed a test call came through. Suspect the on-site phone equipment, needs permanent fix Monday, check with Matthew on replacement. Marco also updated Nina by text. Leaving open."}
+  ],activity:[
+   {t:"Sat, 10:30 PM",text:"Call forwarding set on Westgate main line to 614-555-0177, by "+T2+"."}
+  ]},
+ {id:41219,subject:"Computer slow",company:"brennan",contact:"lherrera",status:"Open",owner:T2,created:"Sat, 11:05 PM",updated:"Mon, 8:36 AM",
+  msgs:[
+   {kind:"email",from:"Luis Herrera",addr:"lherrera@brennanmw.com",when:"Sat, 11:05 PM",body:"My computer in the supervisor office takes forever to start. Like 10 minutes before I can open anything. Been like this for a couple weeks but it's getting worse. Could someone look at it Monday morning? I'll be there from 6.\n\nLuis"},
+   {kind:"note",from:"Carlos (Tier 2)",addr:"",when:"Mon, 8:36 AM",body:"Worked with Luis remotely this morning before heading to the Brennan site. Session details below."}
+  ],activity:[
+   {t:"Mon, 8:00 AM",text:"Remote session started with Luis. 5 min. ("+T2+")"},
+   {t:"Mon, 8:05 AM",text:"Checked disk: 118 GB free of 256 GB, no errors. Checked memory: 8 GB, 2.1 GB used at idle. 4 min. ("+T2+")"},
+   {t:"Mon, 8:09 AM",text:"Task Manager, Startup tab: 6 apps enabled, all rated High impact (2 update agents, 1 printer utility, 2 chat apps, 1 cloud sync client). Disabled all 6 from startup. Did not uninstall anything. 6 min. ("+T2+")"},
+   {t:"Mon, 8:15 AM",text:"Windows Update: 2 pending cumulative updates. Installed and restarted. 14 min. ("+T2+")"},
+   {t:"Mon, 8:29 AM",text:"Timed restart: 1 min 40 sec to desktop. 3 min. ("+T2+")"},
+   {t:"Mon, 8:32 AM",text:"Called Luis. He confirmed startup is now under 2 minutes and nothing he uses is missing. No other issues reported. 3 min. ("+T2+")"},
+   {t:"Mon, 8:35 AM",text:"Time logged: 35 min (8:00 to 8:35 AM). ("+T2+")"}
+  ]},
+ {id:41221,subject:"Locked out, need reset",company:"northway",contact:null,status:"New",owner:"Unassigned",created:"Sun, 4:15 PM",updated:"Sun, 4:15 PM",requester:{name:"Chris Dunn",addr:"chris.dunn.design@gmail.com"},
+  msgs:[
+   {kind:"email",from:"Chris Dunn",addr:"chris.dunn.design@gmail.com",when:"Sun, 4:15 PM",body:"Hi, this is Chris Dunn from Northway. I'm traveling this week and I can't get into my Northway email, it keeps saying my password is wrong and now I think it locked me. I have a client deck due Tuesday that's in my inbox. Can you reset it and send the new password to this email? My work phone is back at the office so I can't get texts there.\n\nThanks, Chris"}
+  ],activity:[]},
+ {id:41222,subject:"Is this email legit?",company:"brennan",contact:"thalloran",status:"New",owner:"Unassigned",created:"Sun, 7:40 PM",updated:"Sun, 7:40 PM",
+  msgs:[
+   {kind:"email",from:"Tom Halloran",addr:"thalloran@brennanmw.com",when:"Sun, 7:40 PM",body:"Hey, got this on Friday and wasn't sure. It says our supplier portal account for Midwest Fasteners needs to be re-verified or orders will be put on hold. We do order from them but the sender address looks a little off (midwest-fasteners-portal.com). I clicked the link and put in my password but the page just spun, so I closed it. Probably nothing but figured I'd check before I place the Monday order.\n\nTom",
+    fwd:"From: accounts@midwest-fasteners-portal.com\nSubject: ACTION REQUIRED: Verify your supplier portal account\n\nYour Midwest Fasteners supplier portal account requires re-verification within 48 hours or pending orders will be placed on hold. Verify now: [link]"}
+  ],activity:[]},
+ {id:41224,subject:"Printer in shipping offline again",company:"brennan",contact:"rjansen",status:"New",owner:"Unassigned",created:"Mon, 7:50 AM",updated:"Mon, 7:50 AM",
+  msgs:[
+   {kind:"email",from:"Rob Jansen",addr:"rjansen@brennanmw.com",when:"Mon, 7:50 AM",body:"The label printer in the shipping office is showing offline again. This is the line 2 label printer, the Zebra one, not the big HP. Guys already unplugged it and plugged it back in, same thing. We're using the backup label printer for now, but someone has to walk the labels over every time.\n\nRob"}
+  ],activity:[]},
+ {id:41225,subject:"Email on my new phone",company:"copperkettle",contact:"nina",status:"New",owner:"Unassigned",created:"Mon, 8:05 AM",updated:"Mon, 8:05 AM",
+  msgs:[
+   {kind:"email",from:"Nina Castellano",addr:"nina@copperkettlekitchen.com",when:"Mon, 8:05 AM",body:"Good morning, I got a new phone over the weekend (iPhone) and I need my Copper Kettle email on it. I can still use email on my laptop, I just need it set up on the new phone. No rush before noon, I'm at Downtown doing inventory.\n\nNina"}
+  ],activity:[]},
+ {id:41226,subject:"Phones not ringing",company:"ridgeline",contact:"pnair",status:"New",owner:"Unassigned",created:"Mon, 8:12 AM",updated:"Mon, 8:12 AM",
+  msgs:[
+   {kind:"email",from:"Priya Nair",addr:"pnair@ridgelinefm.com",when:"Mon, 8:12 AM",body:"Hi, our phones here at Main St aren't ringing. A patient just walked in and said she's been calling since 7:30 and gets a busy signal. I can't make calls out either, when I pick up there's nothing. The little light on the phone box in the back room is orange instead of green, if that means anything. We have a full morning of appointments and people are going to think we're closed. Please help.\n\nPriya"}
+  ],activity:[]},
+ {id:41227,subject:"Phone issues at Main St",company:"ridgeline",contact:"kosei",status:"New",owner:"Unassigned",created:"Mon, 8:25 AM",updated:"Mon, 8:25 AM",
+  msgs:[
+   {kind:"email",from:"Kevin Osei",addr:"kosei@ridgelinefm.com",when:"Mon, 8:25 AM",body:"Patients are calling my cell saying the Main St number doesn't work. Oak Ave is fine, I'm there this morning. Can I get an update on what's going on and when we'll have phones back? Dr. Reeves is asking.\n\nKevin"}
+  ],activity:[]},
+ {id:41228,subject:"Teams keeps signing me out",company:"hartwell",contact:"dprice",status:"New",owner:"Unassigned",created:"Mon, 8:30 AM",updated:"Mon, 8:30 AM",
+  msgs:[
+   {kind:"email",from:"Dana Price",addr:"dprice@hartwellcpa.com",when:"Mon, 8:30 AM",body:"Since about Wednesday last week Teams asks me to sign in again 2 or 3 times a day. Outlook is fine, I never get asked there. It's annoying more than anything but it kicked me out of a call Friday. I'm on the laptop, Windows 11.\n\nDana"}
+  ],activity:[]},
+ {id:41229,subject:"URGENT!!! Signature",company:"northway",contact:"malbright",status:"New",owner:"Unassigned",created:"Mon, 8:40 AM",updated:"Mon, 8:40 AM",
+  msgs:[
+   {kind:"email",from:"Megan Albright",addr:"malbright@northwaywp.com",when:"Mon, 8:40 AM",body:"My email signature is still showing \"Senior Advisor\" and I've been Managing Partner since last month. This is going out on every email to clients. I have a meeting with a new client Thursday and I cannot have this on there. Please fix today.\n\nMegan"}
+  ],activity:[]}
+];
+
+const documents = {
+  guide:{title:"Linear 1 Help Desk Guide for Tier 1 Technicians",html:`
+<h2>Who we support</h2>
+<p>Linear 1 is a Managed Service Provider in central Ohio. Our clients are small and mid-market businesses: professional services, medical practices, manufacturing, and restaurants. The person calling is rarely an IT professional. It can be the owner, an office manager, or a front desk coordinator. Each client has an authorized contact for account and access changes, listed in the ticketing system under the company record.</p>
+<h2>Where work lives</h2>
+<p>All client requests are tracked in the ticketing system. Record client communication, troubleshooting, and actions taken in the relevant ticket. Project work and after-hours on-call follow separate processes and are outside the scope of this guide.</p>
+<h2>Priority levels</h2>
+<ul>
+<li><strong>P1, Service interruption:</strong> a client, a location, or a critical system cannot operate (phones down, no internet, no access to a line-of-business system). Work starts immediately. When an approved temporary solution is available, use it to restore service while the permanent fix is investigated. Document the temporary change and any follow-up required.</li>
+<li><strong>P2, Single user blocked:</strong> one person cannot work (locked out, no email, workstation down).</li>
+<li><strong>P3, Degraded:</strong> it works, but badly (slow, intermittent, one feature failing).</li>
+<li><strong>P4, Request:</strong> changes, questions, new users, and scheduled work. Record requested completion dates in the ticket.</li>
+</ul>
+<p>Assign priority based on business impact and urgency. Consider the client's business hours and applicable service commitments.</p>
+<p>Priority comes from business impact, not from the client's agreement. The agreement decides whether the work is covered or billed separately. If a request falls outside the client's agreement, set its priority as usual, log it, tell the client it may be billed separately, and confirm with Matthew before you start.</p>
+<h2>What Tier 1 resolves on its own</h2>
+<ul>
+<li>Password resets and account unlocks, after verifying the person's identity.</li>
+<li>MFA re-registration for users without an admin role, after verifying their identity.</li>
+<li>New user setup requested by a person the client record authorizes: the account, an available license, and the standard groups for the employee's team.</li>
+<li>Access to groups and shared mailboxes that do not hold financial, HR, or ownership data, when a person the client record authorizes requests it.</li>
+<li>Outlook, Teams, OneDrive, and Office app problems for a single user.</li>
+<li>Printer, mapped drive, and basic network problems on a single device.</li>
+<li>Phone problems for a single user, such as a handset, voicemail, or call forwarding.</li>
+</ul>
+<h2>What requires approval or escalation</h2>
+<ul>
+<li>Access to financial, HR, or ownership data requires written approval from the client's authorized contact.</li>
+<li>Admin roles and other elevated permissions require written approval from the client's authorized contact. Carlos (Tier 2) makes the change.</li>
+<li>License purchases require written approval from the client's authorized contact and are coordinated through Matthew. Tier 1 does not purchase licenses.</li>
+<li>MFA changes for accounts with an admin role go to Carlos.</li>
+<li>Changes to tenant-wide settings, security policies, servers, firewalls, or network equipment go to Carlos.</li>
+<li>Problems that affect more than 1 user, or that you cannot resolve with the checks in this guide, go to Carlos with your notes.</li>
+</ul>
+<p>Escalating a ticket does not close it.</p>
+<h2>Identity verification</h2>
+<p>Before you reset a password, change MFA, or change a user's account or access, verify the person's identity.</p>
+<ul>
+<li>Call the person back at the phone number in their contact record. Do not use a number they give you in the request.</li>
+<li>If you cannot reach them, ask the client's authorized contact to confirm the request in writing.</li>
+<li>Never send a password, a reset link, or a code to a personal email address or to a phone number that is not on file.</li>
+</ul>
+<p>A request from a person the client record authorizes, sent from their email address on file, counts as verified for standard requests. Record in the ticket how you verified each person.</p>
+<h2>Security events</h2>
+<p>Treat any sign that an account may be compromised as P1. Signs include a password entered on a suspicious page, MFA requests the user did not start, sign-ins from places the user does not recognize, and mail rules the user did not create.</p>
+<p>Tier 1 may do these 2 things right away, without approval:</p>
+<ul>
+<li>Block sign-in for the account.</li>
+<li>Sign the user out of all sessions.</li>
+</ul>
+<p>Then call Carlos (Tier 2), escalate the ticket to him, and tell the client's authorized contact what you did and why. Do not reset the password, change MFA, or delete mail rules on a possibly compromised account until Carlos reviews it.</p>
+<h2>Ticket documentation</h2>
+<p>Ticket notes should make clear what the client reported, what you checked and found, what you did or what happens next, and what the client was told. Distinguish completed actions from proposed next steps. Log time per entry to support billing and service records. Write notes so another technician can continue without repeating questions or checks already completed.</p>
+<h2>Client communication</h2>
+<p>Acknowledge every new ticket. Give a next step and a time for the next update, even if the fix is not ready. Plain language, no jargon, and no promises you cannot keep.</p>`},
+  phones:{title:"Phone system quick reference",html:`
+<p>Procedures for the hosted phone system used by Linear 1 clients.</p>
+<h2>Forward a main line</h2>
+<p class="step">Admin portal, Numbers, select the number, Forwarding, enter the destination, Save. Confirm with a test call. Remove the forward the same way when service is restored.</p>
+<h2>Change the after-hours greeting</h2>
+<p class="step">Admin portal, Auto Attendant, select the location, After Hours, upload audio or use text-to-speech, set Schedule, Save.</p>
+<h2>Reset a voicemail PIN</h2>
+<p class="step">Admin portal, Users, select the user, Voicemail, Reset PIN.</p>
+<h2>Handset shows "No registration"</h2>
+<p class="step">Check the on-site phone equipment (power and link lights), then escalate with the equipment model and light status.</p>`}
+};
+
+// ---------- rendering ----------
+const view = document.getElementById("view");
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const initials = n => n.replace(/^Dr\.\s*/,"").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+const av = (name,co) => `<span class="av c-${co}">${esc(initials(name))}</span>`;
+const reqOf = t => t.requester ? t.requester : {name:contacts[t.contact].name,addr:contacts[t.contact].email};
+
+function setNav(key){ document.querySelectorAll(".rail a").forEach(a=>a.classList.toggle("active",a.dataset.nav===key)); }
+
+let sort = {key:"created",dir:1};
+const filters = {fc:"",fs:"",fo:""};
+const searches = {tickets:"",contacts:"",companies:""};
+const gsearch = document.getElementById("gsearch");
+gsearch.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); } });
+const dayOrder = {Thu:0,Fri:1,Sat:2,Sun:3,Mon:4};
+function whenValue(str){
+  const m = str.match(/^(\w{3}), (\d{1,2}):(\d{2}) (AM|PM)$/);
+  if(!m) return 0;
+  let h = parseInt(m[2],10)%12; if(m[4]==="PM") h+=12;
+  return (dayOrder[m[1]]||0)*1440 + h*60 + parseInt(m[3],10);
+}
+const sortKeys = {id:t=>t.id,subject:t=>t.subject.toLowerCase(),company:t=>companies[t.company].name,requester:t=>reqOf(t).name,status:t=>t.status,owner:t=>t.owner,created:t=>whenValue(t.created),updated:t=>whenValue(t.updated)};
+
+function renderTickets(){
+  setNav("tickets");
+  gsearch.value = searches.tickets; gsearch.placeholder = "Search tickets";
+  view.innerHTML = `
+    <h1>Tickets</h1>
+    <div class="tabs"><div class="on">All tickets</div></div>
+    <div class="toolbar">
+      <span class="view"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 12h18M3 19h18"/></svg>Table view</span>
+      <select id="fc" aria-label="Filter by company"><option value="">Company: all</option>${Object.entries(companies).map(([k,c])=>`<option value="${k}"${filters.fc===k?" selected":""}>${esc(c.name)}</option>`).join("")}</select>
+      <select id="fs" aria-label="Filter by status"><option value="">Status: all</option><option value="New"${filters.fs==="New"?" selected":""}>Status: New</option><option value="Open"${filters.fs==="Open"?" selected":""}>Status: Open</option></select>
+      <select id="fo" aria-label="Filter by owner"><option value="">Owner: all</option><option value="Unassigned"${filters.fo==="Unassigned"?" selected":""}>Owner: Unassigned</option><option value="${esc(T2)}"${filters.fo===T2?" selected":""}>Owner: ${esc(T2)}</option></select>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="panel"><table>
+      <thead><tr><th class="chk"><input type="checkbox" aria-label="Select all" id="selall"></th>
+        ${[["id","TICKET"],["subject","SUBJECT"],["company","COMPANY"],["requester","REQUESTER"],["status","STATUS"],["prio","PRIORITY"],["owner","OWNER"],["created","CREATE DATE"],["updated","LAST ACTIVITY"]].map(([k,l])=>`<th data-k="${k}">${l}${sort.key===k?`<span class="dir">${sort.dir>0?"▲":"▼"}</span>`:""}</th>`).join("")}
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>`;
+  const draw = () => {
+    searches.tickets = gsearch.value||""; filters.fc=document.getElementById("fc").value; filters.fs=document.getElementById("fs").value; filters.fo=document.getElementById("fo").value;
+    const q=searches.tickets.toLowerCase(), fc=filters.fc, fs=filters.fs, fo=filters.fo;
+    let list = tickets.filter(t=>{
+      const r=reqOf(t); const hay=(t.id+" "+t.subject+" "+companies[t.company].name+" "+r.name+" "+r.addr).toLowerCase();
+      return (!q||hay.includes(q)) && (!fc||t.company===fc) && (!fs||t.status===fs) && (!fo||t.owner===fo);
+    });
+    if(sortKeys[sort.key]){ const f=sortKeys[sort.key]; list=list.slice().sort((a,b)=>(f(a)>f(b)?1:f(a)<f(b)?-1:0)*sort.dir); }
+    document.getElementById("count").textContent = list.length+" of "+tickets.length+" tickets";
+    document.getElementById("rows").innerHTML = list.length ? list.map(t=>{
+      const r=reqOf(t);
+      return `<tr class="row" data-id="${t.id}"><td class="chk"><input type="checkbox" aria-label="Select ticket ${t.id}"></td><td class="dim">#${t.id}</td><td class="name"><a href="#ticket-${t.id}">${esc(t.subject)}</a></td><td>${av(companies[t.company].name,t.company)}${esc(companies[t.company].name)}</td><td>${esc(r.name)}</td><td><span class="status ${t.status}">${t.status}</span></td><td class="dim">--</td><td>${esc(t.owner)}</td><td class="dim">${esc(t.created)}</td><td class="dim">${esc(t.updated)}</td></tr>`;
+    }).join("") : `<tr><td colspan="10" class="empty">No tickets match these filters.</td></tr>`;
+    document.querySelectorAll("tr.row").forEach(r=>r.addEventListener("click",e=>{ if(e.target.closest("input,a")) return; navigate("ticket-"+r.dataset.id); }));
+  };
+  ["fc","fs","fo"].forEach(id=>document.getElementById(id).addEventListener("input",draw));
+  gsearch.oninput = ()=>{ const pos=gsearch.selectionStart; draw(); gsearch.setSelectionRange(pos,pos); };
+  document.querySelectorAll("th[data-k]").forEach(th=>th.addEventListener("click",()=>{ const k=th.dataset.k; if(k==="prio") return; sort = sort.key===k?{key:k,dir:-sort.dir}:{key:k,dir:1}; renderTickets(); }));
+  document.getElementById("selall").addEventListener("change",e=>document.querySelectorAll("tbody .chk input").forEach(c=>c.checked=e.target.checked));
+  draw();
+}
+
+function renderTicket(id){
+  setNav("tickets");
+  const t = tickets.find(x=>x.id===id);
+  if(!t){ view.innerHTML=`<div class="empty">Ticket #${esc(id)} was not found. <a href="#tickets">Back to tickets</a></div>`; return; }
+  const c = companies[t.company];
+  const ct = t.contact ? contacts[t.contact] : null;
+  const r = reqOf(t);
+  const msgs = t.msgs.map(m=>`
+    <div class="msg ${m.kind==="note"?"note":""}">
+      <div class="from"><div><b>${esc(m.from)}</b>${m.addr?` <span class="addr">&lt;${esc(m.addr)}&gt;</span>`:""}${m.kind==="note"?`<span class="tag">Internal note</span>`:m.kind==="reply"?`<span class="tag">Reply to client</span>`:`<span class="tag">Email from client</span>`}</div><span class="when">${esc(m.when)}</span></div>
+      <p>${esc(m.body)}</p>
+      ${m.fwd?`<div class="fwd"><p>${esc(m.fwd)}</p></div>`:""}
+    </div>`).join("");
+  const act = t.activity.length ? `<div class="panel"><div class="timeline-head">Activity</div><div class="activity"><ul>${t.activity.map(a=>`<li><span class="t">${esc(a.t)}</span><span>${esc(a.text)}</span></li>`).join("")}</ul></div></div>` : "";
+  view.innerHTML = `
+    <div class="crumb"><a href="#tickets">Tickets</a> &rsaquo; #${t.id}</div>
+    <div class="record">
+      <div class="col">
+        <div class="panel props">
+          <h1>${esc(t.subject)}</h1>
+          <div class="sub">Ticket #${t.id}</div>
+          <dl>
+            <dt>Ticket status</dt><dd><span class="status ${t.status}">${t.status}</span></dd>
+            <dt>Priority</dt><dd class="dim">--</dd>
+            <dt>Ticket owner</dt><dd>${esc(t.owner)}</dd>
+            <dt>Create date</dt><dd>${esc(t.created)}</dd>
+            <dt>Last activity</dt><dd>${esc(t.updated)}</dd>
+            <dt>Source</dt><dd>Email</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel"><div class="timeline-head">Conversation</div>${msgs}</div>
+        ${act}
+      </div>
+      <aside class="col side">
+        <div class="panel">
+          <h2>Requester</h2>
+          <dl>
+            <dt>Name</dt><dd>${esc(r.name)}</dd>
+            <dt>Email</dt><dd>${esc(r.addr)}</dd>
+            ${ct?`<dt>Title</dt><dd>${esc(ct.title)}</dd>${ct.phone?`<dt>Phone</dt><dd>${esc(ct.phone)}</dd>`:""}${ct.location?`<dt>Location</dt><dd>${esc(ct.location)}</dd>`:""}`:`<dt>Contact record</dt><dd>No contact record matches this email address.</dd>`}
+          </dl>
+        </div>
+        <div class="panel">
+          <h2>Company</h2>
+          <dl>
+            <dt>Name</dt><dd><a href="#company-${t.company}">${esc(c.name)}</a></dd>
+            <dt>Type</dt><dd>${esc(c.type)}</dd>
+            <dt>Hours</dt><dd>${esc(c.hours)}</dd>
+            <dt>Authorized contact</dt><dd>${esc(c.authorized)}</dd>
+            <dt>Notes</dt><dd><ul>${c.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></dd>
+          </dl>
+        </div>
+        <div class="panel">
+          <h2>Contacts at ${esc(c.name)}</h2>
+          <ul>${Object.values(contacts).filter(x=>x.company===t.company).map(x=>`<li>${esc(x.name)}, ${esc(x.title)}</li>`).join("")}</ul>
+        </div>
+      </aside>
+    </div>`;
+  document.querySelector("main").scrollTo(0,0);
+}
+
+function renderContacts(){
+  setNav("contacts");
+  gsearch.value = searches.contacts; gsearch.placeholder = "Search contacts";
+  const q=searches.contacts.toLowerCase();
+  const list=Object.values(contacts).filter(x=>!q||(x.name+" "+x.email+" "+companies[x.company].name).toLowerCase().includes(q));
+  view.innerHTML = `<h1>Contacts</h1><div class="tabs"><div class="on">All contacts</div></div><div class="panel"><table>
+    <thead><tr><th class="chk"><input type="checkbox" aria-label="Select all"></th><th>NAME</th><th>TITLE</th><th>COMPANY</th><th>EMAIL</th><th>PHONE NUMBER</th><th>LOCATION</th></tr></thead>
+    <tbody>${list.map(x=>`<tr><td class="chk"><input type="checkbox" aria-label="Select ${esc(x.name)}"></td><td class="name">${av(x.name,x.company)}${esc(x.name)}</td><td>${esc(x.title)}</td><td><a href="#company-${x.company}">${esc(companies[x.company].name)}</a></td><td><a href="mailto:${esc(x.email)}">${esc(x.email)}</a></td><td class="dim">${esc(x.phone||"--")}</td><td class="dim">${esc(x.location||"--")}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">No contacts match.</td></tr>`}</tbody></table></div>`;
+  gsearch.oninput = ()=>{ searches.contacts = gsearch.value||""; renderContacts(); };
+}
+
+function renderCompanies(){
+  setNav("companies");
+  gsearch.value = searches.companies; gsearch.placeholder = "Search companies";
+  const q=searches.companies.toLowerCase();
+  const list=Object.entries(companies).filter(([k,c])=>!q||c.name.toLowerCase().includes(q));
+  view.innerHTML = `<h1>Companies</h1><div class="tabs"><div class="on">All companies</div></div><div class="panel"><table>
+    <thead><tr><th class="chk"><input type="checkbox" aria-label="Select all"></th><th>NAME</th><th>TYPE</th><th>USERS</th><th>LOCATIONS</th><th>AUTHORIZED CONTACT</th><th>OPEN TICKETS</th></tr></thead>
+    <tbody>${list.map(([k,c])=>`<tr><td class="chk"><input type="checkbox" aria-label="Select ${esc(c.name)}"></td><td class="name">${av(c.name,k)}<a href="#company-${k}">${esc(c.name)}</a></td><td>${esc(c.type)}</td><td>${c.users}</td><td>${esc(c.locations)}</td><td>${esc(c.authorized)}</td><td>${tickets.filter(t=>t.company===k).length}</td></tr>`).join("")||`<tr><td colspan="7" class="empty">No companies match.</td></tr>`}</tbody></table></div>`;
+  gsearch.oninput = ()=>{ searches.companies = gsearch.value||""; renderCompanies(); };
+}
+
+function renderCompany(key){
+  setNav("companies");
+  const c = companies[key];
+  if(!c){ view.innerHTML=`<div class="empty">Company not found. <a href="#companies">Back to companies</a></div>`; return; }
+  const open = tickets.filter(t=>t.company===key);
+  view.innerHTML = `
+    <div class="crumb"><a href="#companies">Companies</a> &rsaquo; ${esc(c.name)}</div>
+    <div class="record">
+      <div class="col"><div class="panel props">
+        <h1>${av(c.name,key)}${esc(c.name)}</h1><div class="sub">${esc(c.type)}</div>
+        <dl><dt>Users</dt><dd>${c.users}</dd><dt>Locations</dt><dd>${esc(c.locations)}</dd><dt>Hours</dt><dd>${esc(c.hours)}</dd><dt>Authorized contact</dt><dd>${esc(c.authorized)}</dd><dt>Notes</dt><dd><ul style="margin:4px 0 0;padding-left:18px">${c.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></dd></dl>
+      </div></div>
+      <div class="col">
+        <div class="panel"><div class="timeline-head">Open tickets</div><div class="activity"><ul>${open.map(t=>`<li><span class="t">${esc(t.created)}</span><span><a href="#ticket-${t.id}">#${t.id} ${esc(t.subject)}</a></span></li>`).join("")||"<li>None</li>"}</ul></div></div>
+      </div>
+      <aside class="col side"><div class="panel"><h2>Contacts</h2><ul>${Object.values(contacts).filter(x=>x.company===key).map(x=>`<li>${esc(x.name)}, ${esc(x.title)}${x.email?`, ${esc(x.email)}`:""}${x.phone?`, ${esc(x.phone)}`:""}${x.location?` (${esc(x.location)})`:""}</li>`).join("")}</ul></div></aside>
+    </div>`;
+  document.querySelector("main").scrollTo(0,0);
+}
+
+function renderDocuments(key){
+  setNav("documents");
+  if(key && documents[key]){
+    const d = documents[key];
+    view.innerHTML = `<div class="crumb"><a href="#documents">Documents</a> &rsaquo; ${esc(d.title)}</div><div class="panel doc"><h1>${esc(d.title)}</h1>${d.html}</div>`;
+    document.querySelector("main").scrollTo(0,0); return;
+  }
+  view.innerHTML = `<h1>Documents</h1><div class="tabs"><div class="on">Team references</div></div><div class="cards">${Object.entries(documents).map(([k,d])=>`<div class="panel card"><h2><a href="#doc-${k}">${esc(d.title)}</a></h2><div class="sub">Internal reference</div></div>`).join("")}</div>`;
+}
+
+let current = (location.hash||"#tickets").slice(1);
+function navigate(hash){
+  current = hash.replace(/^#/,"") || "tickets";
+  try{ if(location.hash !== "#"+current) history.pushState({h:current},"","#"+current); }catch(e){}
+  route();
+}
+document.addEventListener("click",e=>{
+  const a = e.target.closest("a[href^='#']");
+  if(!a) return;
+  e.preventDefault();
+  navigate(a.getAttribute("href"));
+});
+function route(){
+  const h = current;
+  gsearch.oninput = null;
+  const listView = /^(tickets|contacts|companies)$/.test(h);
+  gsearch.disabled = !listView;
+  if(!listView){ gsearch.value=""; gsearch.placeholder="Search is available in list views"; }
+  if(h==="tickets") return renderTickets();
+  if(h.startsWith("ticket-")) return renderTicket(parseInt(h.slice(7),10));
+  if(h==="contacts") return renderContacts();
+  if(h==="companies") return renderCompanies();
+  if(h.startsWith("company-")) return renderCompany(h.slice(8));
+  if(h==="documents") return renderDocuments();
+  if(h.startsWith("doc-")) return renderDocuments(h.slice(4));
+  renderTickets();
+}
+window.addEventListener("popstate",()=>{ const h=(location.hash||"#tickets").slice(1); if(h!==current){ current=h; route(); } });
+window.addEventListener("hashchange",()=>{ const h=(location.hash||"#tickets").slice(1); if(h!==current){ current=h; route(); } });
+route();
+</script>
+</body>
+</html>
